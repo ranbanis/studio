@@ -1,22 +1,24 @@
+
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+// useAuth removed
 import { PageTitle } from '@/components/shared/page-title';
 import { CategoryBreakdownChart } from '@/components/insights/category-breakdown-chart';
 import { AIPoweredInsights } from '@/components/insights/ai-powered-insights';
+// userId parameter removed
 import { getMonthlyExpenses } from '@/lib/localStorageStore';
-import type { Expense, MonthlyBreakdownItem, ExpenseCategory, SpendingInsights as AISpendingInsightsType } from '@/lib/types';
+import type { MonthlyBreakdownItem, AISpendingInsightsType } from '@/lib/types'; // Expense, ExpenseCategory removed as they are implicitly handled
 import { expenseCategories } from '@/lib/types';
 import { provideSpendingInsightsAction } from '@/lib/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // CardDescription added
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CategoryIcon } from '@/components/shared/category-icon';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InsightsPage() {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Removed
   const [monthlyData, setMonthlyData] = useState<MonthlyBreakdownItem[]>([]);
   const [aiInsights, setAiInsights] = useState<AISpendingInsightsType['aiInsights'] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -26,7 +28,6 @@ export default function InsightsPage() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const uniqueYears = useMemo(() => {
-    // In a real app, derive this from stored expense dates or offer a wider range
     const currentYear = new Date().getFullYear();
     return [currentYear, currentYear - 1, currentYear - 2];
   }, []);
@@ -39,12 +40,13 @@ export default function InsightsPage() {
   []);
 
   const fetchInsightsData = useCallback(async () => {
-    if (!user) return;
+    // user check removed
     setIsLoading(true);
     setError(null);
 
     try {
-      const expensesForMonth = getMonthlyExpenses(user.uid, selectedYear, selectedMonth);
+      // Call updated to not require userId
+      const expensesForMonth = getMonthlyExpenses(selectedYear, selectedMonth);
       
       const breakdown: MonthlyBreakdownItem[] = expenseCategories.map(category => ({
         category,
@@ -66,8 +68,8 @@ export default function InsightsPage() {
           ...item,
           percentage: totalMonthSpending > 0 ? item.totalAmount / totalMonthSpending : 0,
         }))
-        .filter(item => item.totalAmount > 0) // Only show categories with spending
-        .sort((a,b) => b.totalAmount - a.totalAmount); // Sort by amount
+        .filter(item => item.totalAmount > 0)
+        .sort((a,b) => b.totalAmount - a.totalAmount); 
 
       setMonthlyData(finalBreakdown);
 
@@ -80,7 +82,7 @@ export default function InsightsPage() {
           setAiInsights(aiResult);
         }
       } else {
-        setAiInsights(null); // No data, no AI insights
+        setAiInsights(null);
       }
 
     } catch (e) {
@@ -89,13 +91,12 @@ export default function InsightsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear]); // user removed from dependencies
 
   useEffect(() => {
     fetchInsightsData();
   }, [fetchInsightsData]);
 
-  // Refresh insights when navigating back to this page (e.g. after adding expense)
   useEffect(() => {
     const handleFocus = () => fetchInsightsData();
     window.addEventListener('focus', handleFocus);
@@ -103,7 +104,6 @@ export default function InsightsPage() {
       window.removeEventListener('focus', handleFocus);
     };
   }, [fetchInsightsData]);
-
 
   return (
     <div className="space-y-8">

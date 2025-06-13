@@ -1,11 +1,13 @@
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+// useAuth removed
 import { PageTitle } from '@/components/shared/page-title';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { DaysRemaining } from '@/components/shared/days-remaining';
+// userId parameter removed from these functions
 import { getAllExpenses, getDailyExpenses, getMonthlyExpenses } from '@/lib/localStorageStore';
 import type { Expense, SpendingSummary } from '@/lib/types';
 import { summarizeSpendingAction } from '@/lib/actions';
@@ -14,23 +16,24 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Removed
   const [summary, setSummary] = useState<SpendingSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
 
   const fetchSummary = useCallback(async () => {
-    if (!user) return;
+    // user check removed
     setIsLoading(true);
     setError(null);
 
     try {
       const today = new Date();
-      const dailyExpenses = getDailyExpenses(user.uid, today);
-      const monthlyExpenses = getMonthlyExpenses(user.uid, today.getFullYear(), today.getMonth());
+      // Calls updated to not require userId
+      const dailyExpenses = getDailyExpenses(today);
+      const monthlyExpenses = getMonthlyExpenses(today.getFullYear(), today.getMonth());
       
-      const allExpenses = getAllExpenses(user.uid);
+      const allExpenses = getAllExpenses();
       setRecentExpenses(allExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
 
       const dailyTotal = dailyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -46,23 +49,21 @@ export default function DashboardPage() {
     } catch (e) {
       console.error(e);
       setError('Failed to load spending summary.');
-      // Set totals even if AI fails
       const today = new Date();
-      const dailyExpenses = getDailyExpenses(user.uid, today);
-      const monthlyExpenses = getMonthlyExpenses(user.uid, today.getFullYear(), today.getMonth());
+      const dailyExpenses = getDailyExpenses(today); // No userId
+      const monthlyExpenses = getMonthlyExpenses(today.getFullYear(), today.getMonth()); // No userId
       const dailyTotal = dailyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
       const monthlyTotal = monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
       setSummary({ dailyTotal, monthlyTotal, aiSummary: null });
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, []); // user removed from dependencies
 
   useEffect(() => {
     fetchSummary();
   }, [fetchSummary]);
   
-  // Refresh summary when navigating back to this page (e.g. after adding expense)
   useEffect(() => {
     const handleFocus = () => fetchSummary();
     window.addEventListener('focus', handleFocus);
@@ -71,8 +72,8 @@ export default function DashboardPage() {
     };
   }, [fetchSummary]);
 
-
-  const greeting = user?.displayName ? `Welcome back, ${user.displayName.split(' ')[0]}!` : "Welcome to DragonSpend!";
+  // Simplified greeting
+  const greeting = "Welcome to DragonSpend!";
 
   return (
     <div className="space-y-8">

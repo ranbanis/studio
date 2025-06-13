@@ -1,10 +1,12 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, BarChart2, LogOut, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
+import { Home, PlusCircle, BarChart2, Settings } from 'lucide-react';
+// Button is not used for sign out anymore
+// import { Button } from '@/components/ui/button';
+// useAuth is removed
 import { Logo } from '@/components/shared/logo';
 import { siteConfig } from '@/config/site';
 import { cn } from '@/lib/utils';
@@ -20,12 +22,12 @@ const iconMap: { [key: string]: React.ElementType } = {
   Home,
   PlusCircle,
   BarChart2,
-  Settings,
+  Settings, // Retaining settings icon for future use if any
 };
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  // const { user, signOut } = useAuth(); // Removed
 
   return (
     <aside className="h-screen w-64 bg-sidebar text-sidebar-foreground flex flex-col p-4 border-r border-sidebar-border shadow-lg fixed">
@@ -62,24 +64,7 @@ export function AppSidebar() {
           );
         })}
       </nav>
-      {user && (
-        <div className="mt-auto space-y-2">
-           <div className="flex items-center space-x-2 p-2 border-t border-sidebar-border pt-4">
-            {user.photoURL && (
-              <img src={user.photoURL} alt={user.displayName || "User"} className="h-8 w-8 rounded-full" />
-            )}
-            <span className="text-sm text-sidebar-foreground truncate">{user.displayName || user.email}</span>
-          </div>
-          <Button
-            variant="ghost"
-            onClick={signOut}
-            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            <LogOut className="mr-3 h-5 w-5" />
-            Sign Out
-          </Button>
-        </div>
-      )}
+      {/* User info and Sign Out button removed */}
     </aside>
   );
 }

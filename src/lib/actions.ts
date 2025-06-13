@@ -1,3 +1,4 @@
+
 'use server';
 
 import { categorizeExpense as categorizeExpenseFlow } from '@/ai/flows/categorize-expense';
@@ -27,7 +28,6 @@ export async function summarizeSpendingAction(dailySpending: number, monthlySpen
 
 export async function provideSpendingInsightsAction(monthlySpendingData: MonthlyBreakdownItem[]): Promise<any | { error: string }> {
   try {
-    // Format data for the AI
     const formattedData = monthlySpendingData
       .map(item => `${item.category}: $${item.totalAmount.toFixed(2)}`)
       .join(', ');
@@ -43,4 +43,31 @@ export async function provideSpendingInsightsAction(monthlySpendingData: Monthly
     console.error('Error providing spending insights:', error);
     return { error: 'Failed to generate insights.' };
   }
+}
+
+// Placeholder action for Google Sheets integration
+export async function saveExpenseToGoogleSheet(
+  expenseData: Omit<Expense, 'id' | 'date'> // Exclude id, date assuming Sheets might generate its own or date is added serverside
+): Promise<{ success: boolean; message?: string }> {
+  console.log('Attempting to save expense to Google Sheet (Simulated):', {
+    ...expenseData,
+    timestamp: new Date().toISOString(), // Add a timestamp for logging
+  });
+  // In a real implementation, this would involve:
+  // 1. Authenticating with Google Sheets API (server-side).
+  // 2. Appending a new row with the expenseData to the target Sheet.
+  // 3. Handling potential errors from the API.
+  
+  // Simulate a successful operation for now
+  return new Promise(resolve => {
+    setTimeout(() => { // Simulate network delay
+      // const success = Math.random() > 0.2; // Simulate occasional failure
+      const success = true; // For now, always succeed
+      if (success) {
+        resolve({ success: true, message: 'Expense data logged for Google Sheets.' });
+      } else {
+        resolve({ success: false, message: 'Simulated failure to save to Google Sheets.' });
+      }
+    }, 500);
+  });
 }

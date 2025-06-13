@@ -1,6 +1,7 @@
+
 import type { Metadata } from 'next';
 import './globals.css';
-import { AuthProvider } from '@/components/auth/auth-provider';
+// AuthProvider is removed as authentication is no longer used.
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
@@ -22,10 +23,9 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <AuthProvider>
-          {children}
-          <Toaster />
-        </AuthProvider>
+        {/* AuthProvider removed */}
+        {children}
+        <Toaster />
       </body>
     </html>
   );

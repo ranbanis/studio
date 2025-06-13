@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -10,10 +11,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { categorizeExpenseAction } from '@/lib/actions';
+import { categorizeExpenseAction, saveExpenseToGoogleSheet } from '@/lib/actions'; // Added saveExpenseToGoogleSheet
 import { addExpenseToStorage } from '@/lib/localStorageStore';
-import type { ExpenseCategory } from '@/lib/types';
-import { useAuth } from '@/hooks/use-auth';
+import type { ExpenseCategory, Expense } from '@/lib/types'; // Added Expense type
+// useAuth is removed
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 const expenseFormSchema = z.object({
@@ -31,7 +32,7 @@ interface ExpenseFormProps {
 }
 
 export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Removed
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -40,16 +41,12 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
       description: '',
-      amount: undefined, // Use undefined for number input to show placeholder
+      amount: undefined,
     },
   });
 
   const onSubmit: SubmitHandler<ExpenseFormValues> = async (data) => {
-    if (!user) {
-      toast({ title: "Error", description: "You must be logged in to add expenses.", variant: "destructive" });
-      return;
-    }
-
+    // User check removed
     setIsSubmitting(true);
     setFormError(null);
 
@@ -68,7 +65,14 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
       }
       
       const category = aiResult.category as ExpenseCategory;
-      addExpenseToStorage(user.uid, data.description, data.amount, category);
+      // Call addExpenseToStorage without userId
+      const newExpenseData: Omit<Expense, 'id' | 'date'> = { // Data for Sheets
+        description: data.description,
+        amount: data.amount,
+        category: category,
+      };
+      
+      const storedExpense = addExpenseToStorage(data.description, data.amount, category);
 
       toast({
         title: 'Expense Added! 🔥',
@@ -76,6 +80,29 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
         variant: 'default',
         className: 'bg-secondary text-secondary-foreground border-accent'
       });
+      
+      // Placeholder for Google Sheets integration
+      const sheetResult = await saveExpenseToGoogleSheet({
+        description: storedExpense.description,
+        amount: storedExpense.amount,
+        category: storedExpense.category,
+        // date is added by the action or backend if needed for sheets
+      });
+
+      if (sheetResult.success) {
+        toast({
+          title: 'Saved to Sheets (Simulated)',
+          description: sheetResult.message || 'Expense data sent to Google Sheets placeholder.',
+          variant: 'default'
+        });
+      } else {
+         toast({
+          title: 'Sheets Save Failed (Simulated)',
+          description: sheetResult.message || 'Could not send data to Google Sheets placeholder.',
+          variant: 'destructive'
+        });
+      }
+
       form.reset();
       onExpenseAdded?.();
     } catch (error) {
@@ -140,7 +167,7 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
 
           <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Summoning AI Dragon...' : 'Add Expense'}
+            {isSubmitting ? 'Summoning AI Dragon...' : 'Add Expense & Store'}
           </Button>
         </form>
       </CardContent>

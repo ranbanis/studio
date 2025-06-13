@@ -1,3 +1,4 @@
+
 export type ExpenseCategory =
   | 'Transport'
   | 'Outside Food'
@@ -24,7 +25,7 @@ export interface Expense extends ExpenseInput {
   id: string;
   date: string; // ISO string format
   category: ExpenseCategory;
-  userId: string;
+  // userId: string; // Removed userId
 }
 
 export interface MonthlyBreakdownItem {

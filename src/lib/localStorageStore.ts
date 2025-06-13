@@ -1,43 +1,46 @@
+
 'use client';
-import type { Expense, ExpenseInput, ExpenseCategory } from './types';
+import type { Expense, ExpenseCategory } from './types'; // ExpenseInput is not directly used here anymore
 
-const EXPENSES_STORAGE_KEY_PREFIX = 'dragonspend_expenses_';
+// A single global key for all expenses since there's no user context
+const GLOBAL_EXPENSES_STORAGE_KEY = 'dragonspend_expenses_global';
 
-function getStorageKey(userId: string): string {
-  return `${EXPENSES_STORAGE_KEY_PREFIX}${userId}`;
+function getStorageKey(): string {
+  return GLOBAL_EXPENSES_STORAGE_KEY;
 }
 
-export function getAllExpenses(userId: string): Expense[] {
+// userId parameter removed from all functions
+export function getAllExpenses(): Expense[] {
   if (typeof window === 'undefined') return [];
-  const storedExpenses = localStorage.getItem(getStorageKey(userId));
+  const storedExpenses = localStorage.getItem(getStorageKey());
   return storedExpenses ? JSON.parse(storedExpenses) : [];
 }
 
-export function addExpenseToStorage(userId: string, description: string, amount: number, category: ExpenseCategory): Expense {
+export function addExpenseToStorage(description: string, amount: number, category: ExpenseCategory): Expense {
   if (typeof window === 'undefined') throw new Error("localStorage is not available");
-  const expenses = getAllExpenses(userId);
+  const expenses = getAllExpenses();
   const newExpense: Expense = {
     id: crypto.randomUUID(),
-    userId,
+    // userId, // Removed
     description,
     amount,
     category,
     date: new Date().toISOString(),
   };
   expenses.push(newExpense);
-  localStorage.setItem(getStorageKey(userId), JSON.stringify(expenses));
+  localStorage.setItem(getStorageKey(), JSON.stringify(expenses));
   return newExpense;
 }
 
-export function getDailyExpenses(userId: string, date: Date): Expense[] {
-  const expenses = getAllExpenses(userId);
+export function getDailyExpenses(date: Date): Expense[] {
+  const expenses = getAllExpenses();
   const targetDateString = date.toISOString().split('T')[0];
   return expenses.filter(exp => exp.date.startsWith(targetDateString));
 }
 
-export function getMonthlyExpenses(userId: string, year: number, month: number): Expense[] {
-  const expenses = getAllExpenses(userId);
-  // Month is 0-indexed in JavaScript Date, but typically 1-indexed in user input
+export function getMonthlyExpenses(year: number, month: number): Expense[] {
+  const expenses = getAllExpenses();
+  // Month is 0-indexed in JavaScript Date
   const targetMonthString = `${year}-${String(month + 1).padStart(2, '0')}`;
   return expenses.filter(exp => exp.date.startsWith(targetMonthString));
 }
