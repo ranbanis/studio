@@ -2,77 +2,91 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-// useAuth removed
 import { PageTitle } from '@/components/shared/page-title';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
 import { DaysRemaining } from '@/components/shared/days-remaining';
-// userId parameter removed from these functions
-import { getAllExpenses, getDailyExpenses, getMonthlyExpenses } from '@/lib/localStorageStore';
+import { getExpensesFromSheetViaAPI, summarizeSpendingAction } from '@/lib/actions';
 import type { Expense, SpendingSummary } from '@/lib/types';
-import { summarizeSpendingAction } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
 export default function DashboardPage() {
-  // const { user } = useAuth(); // Removed
   const [summary, setSummary] = useState<SpendingSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
+  const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
 
-  const fetchSummary = useCallback(async () => {
-    // user check removed
+  const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const today = new Date();
-      // Calls updated to not require userId
-      const dailyExpenses = getDailyExpenses(today);
-      const monthlyExpenses = getMonthlyExpenses(today.getFullYear(), today.getMonth());
-      
-      const allExpenses = getAllExpenses();
-      setRecentExpenses(allExpenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5));
-
-      const dailyTotal = dailyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-      const monthlyTotal = monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-
-      const aiResult = await summarizeSpendingAction(dailyTotal, monthlyTotal);
-      if ('error' in aiResult) {
-        setError(aiResult.error);
-        setSummary({ dailyTotal, monthlyTotal, aiSummary: null });
+      const expensesResult = await getExpensesFromSheetViaAPI();
+      if (!expensesResult.success || !expensesResult.data) {
+        setError(expensesResult.message || 'Failed to load expense data from backend.');
+        setAllExpenses([]);
+        setRecentExpenses([]);
       } else {
-        setSummary({ dailyTotal, monthlyTotal, aiSummary: aiResult.summary });
+        setAllExpenses(expensesResult.data);
+        setRecentExpenses(
+          expensesResult.data
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 5)
+        );
       }
+      
+      // Calculate daily and monthly totals from fetched expenses
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+      const currentMonth = today.getMonth();
+      const currentYear = today.getFullYear();
+
+      const dailyTotal = expensesResult.data?.filter(exp => exp.date.startsWith(todayString))
+                                    .reduce((sum, exp) => sum + exp.amount, 0) || 0;
+      
+      const monthlyTotal = expensesResult.data?.filter(exp => {
+                                      const expDate = new Date(exp.date);
+                                      return expDate.getFullYear() === currentYear && expDate.getMonth() === currentMonth;
+                                    })
+                                    .reduce((sum, exp) => sum + exp.amount, 0) || 0;
+
+      if (expensesResult.success) {
+        const aiResult = await summarizeSpendingAction(dailyTotal, monthlyTotal);
+        if ('error' in aiResult) {
+          setError(prevError => prevError ? `${prevError} ${aiResult.error}` : aiResult.error);
+          setSummary({ dailyTotal, monthlyTotal, aiSummary: null });
+        } else {
+          setSummary({ dailyTotal, monthlyTotal, aiSummary: aiResult.summary });
+        }
+      } else {
+         setSummary({ dailyTotal, monthlyTotal, aiSummary: null });
+      }
+
     } catch (e) {
       console.error(e);
-      setError('Failed to load spending summary.');
-      const today = new Date();
-      const dailyExpenses = getDailyExpenses(today); // No userId
-      const monthlyExpenses = getMonthlyExpenses(today.getFullYear(), today.getMonth()); // No userId
-      const dailyTotal = dailyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-      const monthlyTotal = monthlyExpenses.reduce((sum, exp) => sum + exp.amount, 0);
-      setSummary({ dailyTotal, monthlyTotal, aiSummary: null });
+      const errorMessage = e instanceof Error ? e.message : 'An unexpected error occurred.';
+      setError(prevError => prevError ? `${prevError} ${errorMessage}` : errorMessage);
+      setSummary({ dailyTotal:0, monthlyTotal:0, aiSummary: null }); // Fallback
     } finally {
       setIsLoading(false);
     }
-  }, []); // user removed from dependencies
+  }, []);
 
   useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
+    fetchDashboardData();
+  }, [fetchDashboardData]);
   
   useEffect(() => {
-    const handleFocus = () => fetchSummary();
+    const handleFocus = () => fetchDashboardData(); // Refetch on window focus
     window.addEventListener('focus', handleFocus);
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
-  }, [fetchSummary]);
+  }, [fetchDashboardData]);
 
-  // Simplified greeting
   const greeting = "Welcome to DragonSpend!";
 
   return (
@@ -142,7 +156,7 @@ export default function DashboardPage() {
           ) : summary?.aiSummary ? (
             <p className="text-foreground leading-relaxed">{summary.aiSummary}</p>
           ) : (
-            <p className="text-muted-foreground">No summary available. Start tracking to get insights!</p>
+            <p className="text-muted-foreground">No AI summary available. Ensure expenses are being recorded or check for errors.</p>
           )}
         </CardContent>
       </Card>

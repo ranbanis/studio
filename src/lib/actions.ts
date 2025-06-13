@@ -45,29 +45,55 @@ export async function provideSpendingInsightsAction(monthlySpendingData: Monthly
   }
 }
 
-// Placeholder action for Google Sheets integration
-export async function saveExpenseToGoogleSheet(
-  expenseData: Omit<Expense, 'id' | 'date'> // Exclude id, date assuming Sheets might generate its own or date is added serverside
-): Promise<{ success: boolean; message?: string }> {
-  console.log('Attempting to save expense to Google Sheet (Simulated):', {
-    ...expenseData,
-    timestamp: new Date().toISOString(), // Add a timestamp for logging
-  });
-  // In a real implementation, this would involve:
-  // 1. Authenticating with Google Sheets API (server-side).
-  // 2. Appending a new row with the expenseData to the target Sheet.
-  // 3. Handling potential errors from the API.
-  
-  // Simulate a successful operation for now
-  return new Promise(resolve => {
-    setTimeout(() => { // Simulate network delay
-      // const success = Math.random() > 0.2; // Simulate occasional failure
-      const success = true; // For now, always succeed
-      if (success) {
-        resolve({ success: true, message: 'Expense data logged for Google Sheets.' });
-      } else {
-        resolve({ success: false, message: 'Simulated failure to save to Google Sheets.' });
-      }
-    }, 500);
-  });
+// Action to add expense by calling our backend API
+export async function addExpenseToSheetViaAPI(
+  expenseData: Omit<Expense, 'id' | 'date'>
+): Promise<{ data?: Expense; success: boolean; message?: string }> {
+  try {
+    const response = await fetch('/api/expenses', { // Assuming API route is at /api/expenses
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(expenseData),
+    });
+
+    if (!response.ok) {
+      const errorResult = await response.json();
+      console.error('Failed to add expense via API:', errorResult);
+      return { success: false, message: errorResult.error || 'Failed to add expense. Server responded with an error.' };
+    }
+
+    const result: Expense = await response.json();
+    return { data: result, success: true, message: 'Expense added successfully via API.' };
+  } catch (error) {
+    console.error('Error calling add expense API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while adding expense.';
+    return { success: false, message: errorMessage };
+  }
+}
+
+// Action to get all expenses by calling our backend API
+export async function getExpensesFromSheetViaAPI(): Promise<{ data?: Expense[]; success: boolean; message?: string }> {
+  try {
+    const response = await fetch('/api/expenses', { // Assuming API route is at /api/expenses
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorResult = await response.json();
+      console.error('Failed to fetch expenses via API:', errorResult);
+      return { success: false, message: errorResult.error || 'Failed to fetch expenses. Server responded with an error.' };
+    }
+
+    const result: Expense[] = await response.json();
+    return { data: result, success: true };
+  } catch (error) {
+    console.error('Error calling get expenses API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while fetching expenses.';
+    return { success: false, message: errorMessage };
+  }
 }
