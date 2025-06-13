@@ -1,3 +1,4 @@
+
 import { LoginForm } from '@/components/auth/login-form';
 import { Logo } from '@/components/shared/logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,7 +13,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-headline text-primary">Welcome to DragonSpend</CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
-            Access to DragonSpend is currently managed by your administrator.
+            Please enter your credentials to access your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
