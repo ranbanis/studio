@@ -12,7 +12,7 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-3xl font-headline text-primary">Welcome to DragonSpend</CardTitle>
           <CardDescription className="text-muted-foreground pt-2">
-            Sign in to unleash the power of expense tracking!
+            Access to DragonSpend is currently managed by your administrator.
           </CardDescription>
         </CardHeader>
         <CardContent>
