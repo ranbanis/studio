@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -6,6 +7,7 @@ import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut, type U
 import { auth, googleProvider } from '@/lib/firebase';
 import { AuthContext } from '@/contexts/auth-context';
 import { usePathname, useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast'; // Added useToast import
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -16,6 +18,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast(); // Initialized useToast
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -32,6 +35,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // onAuthStateChanged will handle setUser and redirect
     } catch (error) {
       console.error("Error signing in with Google: ", error);
+      let errorMessage = "An unexpected error occurred during Google Sign-In.";
+      if (error instanceof Error) {
+        // Firebase errors often have a 'code' property
+        const firebaseError = error as any; // Cast to any to check for 'code'
+        if (firebaseError.code) {
+          errorMessage = `Google Sign-In failed: ${firebaseError.message} (Code: ${firebaseError.code})`;
+        } else {
+          errorMessage = `Google Sign-In failed: ${error.message}`;
+        }
+      }
+      toast({
+        title: "Sign-In Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
@@ -44,6 +62,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       router.push('/login');
     } catch (error) {
       console.error("Error signing out: ", error);
+      toast({ // Added toast for sign-out errors as well for consistency
+        title: "Sign-Out Error",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };

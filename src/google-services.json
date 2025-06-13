@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "888573686027",
+    "project_id": "dragonspend",
+    "storage_bucket": "dragonspend.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:888573686027:android:403f46f94844aab48b720e",
+        "android_client_info": {
+          "package_name": "com.dragon.spend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1lelQOVNWwVU_YWccurVF95UDNJ-6ME4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
