@@ -57,12 +57,12 @@ export async function POST(request: NextRequest) {
     ];
 
     // ** TODO: USER IMPLEMENTATION REQUIRED **
-    // Replace 'Sheet1' with the actual name of your sheet tab.
+    // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Ensure your sheet has columns in the order: ID, Date, Description, Amount, Category
     // Example:
     // await sheets.spreadsheets.values.append({
     //   spreadsheetId: GOOGLE_SHEET_ID,
-    //   range: 'Sheet1!A:E', // Adjust if your sheet name or columns are different
+    //   range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
     //   valueInputOption: 'USER_ENTERED',
     //   requestBody: {
     //     values: [newExpenseRow],
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     console.log('--- SIMULATING ADD TO GOOGLE SHEETS (IMPLEMENTATION NEEDED) ---');
     console.log('Spreadsheet ID:', GOOGLE_SHEET_ID);
     console.log('Data to append:', newExpenseRow);
-    console.log('Target range: Sheet1!A:E (Update if needed)');
+    console.log('Target range: DragonSpend!A:E (Update if needed)');
     console.log('--- END SIMULATION ---');
     
     // For now, return the expense as if it were saved, including the generated ID and date
@@ -92,12 +92,12 @@ export async function GET() {
     const sheets = await getSheetsClient();
 
     // ** TODO: USER IMPLEMENTATION REQUIRED **
-    // Replace 'Sheet1' with the actual name of your sheet tab.
+    // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Assumes columns: ID, Date, Description, Amount, Category
     // Example:
     // const response = await sheets.spreadsheets.values.get({
     //   spreadsheetId: GOOGLE_SHEET_ID,
-    //   range: 'Sheet1!A:E', // Adjust if your sheet name or columns are different
+    //   range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
     // });
     // const rows = response.data.values;
     // if (rows && rows.length > 1) { // Assuming first row is header
@@ -115,7 +115,7 @@ export async function GET() {
 
     console.log('--- SIMULATING GET FROM GOOGLE SHEETS (IMPLEMENTATION NEEDED) ---');
     console.log('Spreadsheet ID:', GOOGLE_SHEET_ID);
-    console.log('Target range: Sheet1!A:E (Update if needed)');
+    console.log('Target range: DragonSpend!A:E (Update if needed)');
     console.log('--- END SIMULATION ---');
     
     // For now, return an empty array or mock data
