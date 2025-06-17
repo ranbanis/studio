@@ -38,6 +38,7 @@ async function getSheetsClient() {
 
 // --- POST Handler to add an expense ---
 export async function POST(request: NextRequest) {
+  const sheetNameAndRange = 'DragonSpend!A:E'; // ** USER IMPLEMENTATION REQUIRED: Adjust if your sheet name or columns are different **
   try {
     const sheets = await getSheetsClient();
     const expenseData = (await request.json()) as Omit<Expense, 'id' | 'date'>; 
@@ -57,13 +58,10 @@ export async function POST(request: NextRequest) {
       expenseData.category,
     ];
 
-    // ** USER IMPLEMENTATION REQUIRED **
-    // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Ensure your sheet has columns in the order: ID, Date, Description, Amount, Category
-    // Example:
     await sheets.spreadsheets.values.append({
-      spreadsheetId: GOOGLE_SHEET_ID!, // GOOGLE_SHEET_ID is checked in getSheetsClient
-      range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
+      spreadsheetId: GOOGLE_SHEET_ID!, 
+      range: sheetNameAndRange, 
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [newExpenseRow],
@@ -74,7 +72,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(savedExpense, { status: 201 });
 
   } catch (error) {
-    console.error('Google Sheets API Error (POST):', error);
+    console.error(`Google Sheets API Error (POST) for Sheet ID: [${GOOGLE_SHEET_ID}], Range: [${sheetNameAndRange}]:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to add expense to sheet.';
     return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
@@ -82,22 +80,19 @@ export async function POST(request: NextRequest) {
 
 // --- GET Handler to fetch all expenses ---
 export async function GET() {
+  const sheetNameAndRange = 'DragonSpend!A:E'; // ** USER IMPLEMENTATION REQUIRED: Adjust if your sheet name or columns are different **
   try {
     const sheets = await getSheetsClient();
 
-    // ** USER IMPLEMENTATION REQUIRED **
-    // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Assumes columns: ID, Date, Description, Amount, Category
-    // Example:
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: GOOGLE_SHEET_ID!, // GOOGLE_SHEET_ID is checked in getSheetsClient
-      range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
+      spreadsheetId: GOOGLE_SHEET_ID!, 
+      range: sheetNameAndRange, 
     });
     
     const rows = response.data.values;
     if (rows && rows.length > 1) { // Assuming first row is header
       const expenses: Expense[] = rows.slice(1).map((row: any[]) => {
-        // Basic validation for row structure
         if (row.length < 5) {
           console.warn('Skipping malformed row:', row);
           return null; 
@@ -108,26 +103,23 @@ export async function GET() {
           return null;
         }
         return {
-          id: row[0] || crypto.randomUUID(), // Fallback ID if empty
-          date: row[1] || new Date().toISOString(), // Fallback date if empty
+          id: row[0] || crypto.randomUUID(), 
+          date: row[1] || new Date().toISOString(), 
           description: row[2] || 'N/A',
           amount: amount,
-          category: row[4] as ExpenseCategory || 'Miscellaneous', // Fallback category
+          category: row[4] as ExpenseCategory || 'Miscellaneous', 
         };
-      }).filter(exp => exp !== null) as Expense[]; // Filter out nulls from malformed rows
+      }).filter(exp => exp !== null) as Expense[]; 
       return NextResponse.json(expenses);
     } else if (rows && rows.length <= 1) {
-      // Sheet exists but has no data rows (or only a header)
       return NextResponse.json([]);
     } else {
-      // No rows found at all, possibly incorrect range or empty sheet
       return NextResponse.json([]); 
     }
 
   } catch (error) {
-    console.error('Google Sheets API Error (GET):', error);
+    console.error(`Google Sheets API Error (GET) for Sheet ID: [${GOOGLE_SHEET_ID}], Range: [${sheetNameAndRange}]:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch expenses from sheet.';
     return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
 }
-
