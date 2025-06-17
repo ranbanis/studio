@@ -40,7 +40,7 @@ async function getSheetsClient() {
 
 // --- POST Handler to add an expense ---
 export async function POST(request: NextRequest) {
-  const sheetNameAndRange = 'Sheet1!A:E'; // Updated to Sheet1 based on user screenshot
+  const sheetNameAndRange = 'DragonSpend!A:E'; // Corrected to match user's sheet name
   try {
     const sheets = await getSheetsClient();
     const expenseData = (await request.json()) as Omit<Expense, 'id' | 'date'>; 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
 // --- GET Handler to fetch all expenses ---
 export async function GET() {
-  const sheetNameAndRange = 'Sheet1!A:E'; // Updated to Sheet1 based on user screenshot
+  const sheetNameAndRange = 'DragonSpend!A:E'; // Corrected to match user's sheet name
   try {
     const sheets = await getSheetsClient();
 
