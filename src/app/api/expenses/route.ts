@@ -60,14 +60,14 @@ export async function POST(request: NextRequest) {
     // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Ensure your sheet has columns in the order: ID, Date, Description, Amount, Category
     // Example:
-    // await sheets.spreadsheets.values.append({
-    //   spreadsheetId: GOOGLE_SHEET_ID,
-    //   range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
-    //   valueInputOption: 'USER_ENTERED',
-    //   requestBody: {
-    //     values: [newExpenseRow],
-    //   },
-    // });
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [newExpenseRow],
+      },
+    });
 
     console.log('--- SIMULATING ADD TO GOOGLE SHEETS (IMPLEMENTATION NEEDED) ---');
     console.log('Spreadsheet ID:', GOOGLE_SHEET_ID);
@@ -95,10 +95,10 @@ export async function GET() {
     // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Assumes columns: ID, Date, Description, Amount, Category
     // Example:
-    // const response = await sheets.spreadsheets.values.get({
-    //   spreadsheetId: GOOGLE_SHEET_ID,
-    //   range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
-    // });
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: GOOGLE_SHEET_ID,
+      range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
+    });
     // const rows = response.data.values;
     // if (rows && rows.length > 1) { // Assuming first row is header
     //   const expenses: Expense[] = rows.slice(1).map((row: any[]) => ({
