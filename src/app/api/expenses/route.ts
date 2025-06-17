@@ -12,18 +12,18 @@ const GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW = process.env.GOOGLE_SERVICE_ACCOUN
 // --- Helper function to initialize Google Sheets API client ---
 async function getSheetsClient() {
   if (!GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW) {
-    throw new Error('CRITICAL: The GOOGLE_SERVICE_ACCOUNT_CREDENTIALS environment variable is not set in your .env.local file or server environment. This is required for Google Sheets authentication. Please set it (as a single-line JSON string) and restart your server.');
+    throw new Error('CRITICAL: The GOOGLE_SERVICE_ACCOUNT_CREDENTIALS environment variable is not set in your .env or .env.local file, or server environment. This is required for Google Sheets authentication. Please set it (as a single-line JSON string) and restart your server.');
   }
   if (!GOOGLE_SHEET_ID) {
-    throw new Error('CRITICAL: The GOOGLE_SHEET_ID environment variable is not set in your .env.local file or server environment. This is required to identify your Google Sheet. Please set it and restart your server.');
+    throw new Error('CRITICAL: The GOOGLE_SHEET_ID environment variable is not set in your .env or .env.local file, or server environment. This is required to identify your Google Sheet. Please set it and restart your server.');
   }
 
   let credentials;
   try {
     credentials = JSON.parse(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW);
   } catch (error) {
-    console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_CREDENTIALS. Ensure it is a valid JSON string (ideally single-line) in your .env.local file:', error);
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_CREDENTIALS is not valid JSON. Please check its format in your .env.local file and restart your server.');
+    console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_CREDENTIALS. Ensure it is a valid JSON string (ideally single-line) in your .env or .env.local file:', error);
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_CREDENTIALS is not valid JSON. Please check its format in your .env or .env.local file and restart your server.');
   }
 
   const auth = new google.auth.GoogleAuth({
@@ -130,3 +130,4 @@ export async function GET() {
     return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
 }
+
