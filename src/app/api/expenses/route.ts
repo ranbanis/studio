@@ -12,9 +12,11 @@ const GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW = process.env.GOOGLE_SERVICE_ACCOUN
 // --- Helper function to initialize Google Sheets API client ---
 async function getSheetsClient() {
   if (!GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW) {
+    console.error('CRITICAL: GOOGLE_SERVICE_ACCOUNT_CREDENTIALS environment variable is not set. Value: ', GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW);
     throw new Error('CRITICAL: The GOOGLE_SERVICE_ACCOUNT_CREDENTIALS environment variable is not set in your .env or .env.local file, or server environment. This is required for Google Sheets authentication. Please set it (as a single-line JSON string) and restart your server.');
   }
   if (!GOOGLE_SHEET_ID) {
+    console.error('CRITICAL: GOOGLE_SHEET_ID environment variable is not set. Value: ', GOOGLE_SHEET_ID);
     throw new Error('CRITICAL: The GOOGLE_SHEET_ID environment variable is not set in your .env or .env.local file, or server environment. This is required to identify your Google Sheet. Please set it and restart your server.');
   }
 
@@ -22,7 +24,7 @@ async function getSheetsClient() {
   try {
     credentials = JSON.parse(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW);
   } catch (error) {
-    console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_CREDENTIALS. Ensure it is a valid JSON string (ideally single-line) in your .env or .env.local file:', error);
+    console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_CREDENTIALS. Ensure it is a valid JSON string (ideally single-line) in your .env or .env.local file. Raw value was:', `"${GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW}"`, 'Error:', error);
     throw new Error('GOOGLE_SERVICE_ACCOUNT_CREDENTIALS is not valid JSON. Please check its format in your .env or .env.local file and restart your server.');
   }
 
@@ -38,7 +40,7 @@ async function getSheetsClient() {
 
 // --- POST Handler to add an expense ---
 export async function POST(request: NextRequest) {
-  const sheetNameAndRange = 'DragonSpend!A:E'; // ** USER IMPLEMENTATION REQUIRED: Adjust if your sheet name or columns are different **
+  const sheetNameAndRange = 'Sheet1!A:E'; // Updated to Sheet1 based on user screenshot
   try {
     const sheets = await getSheetsClient();
     const expenseData = (await request.json()) as Omit<Expense, 'id' | 'date'>; 
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
 
 // --- GET Handler to fetch all expenses ---
 export async function GET() {
-  const sheetNameAndRange = 'DragonSpend!A:E'; // ** USER IMPLEMENTATION REQUIRED: Adjust if your sheet name or columns are different **
+  const sheetNameAndRange = 'Sheet1!A:E'; // Updated to Sheet1 based on user screenshot
   try {
     const sheets = await getSheetsClient();
 
@@ -111,9 +113,9 @@ export async function GET() {
         };
       }).filter(exp => exp !== null) as Expense[]; 
       return NextResponse.json(expenses);
-    } else if (rows && rows.length <= 1) {
-      return NextResponse.json([]);
-    } else {
+    } else if (rows && rows.length <= 1) { // Handles empty sheet or sheet with only header
+      return NextResponse.json([]); // Return empty array if no data rows
+    } else { // Handles case where rows is undefined or null
       return NextResponse.json([]); 
     }
 
@@ -123,3 +125,4 @@ export async function GET() {
     return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
   }
 }
+
