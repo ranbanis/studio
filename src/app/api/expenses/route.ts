@@ -1,8 +1,9 @@
+
 // src/app/api/expenses/route.ts
 import { google } from 'googleapis';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import type { Expense } from '@/lib/types';
+import type { Expense, ExpenseCategory } from '@/lib/types';
 
 // Ensure environment variables are loaded
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
@@ -11,18 +12,18 @@ const GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW = process.env.GOOGLE_SERVICE_ACCOUN
 // --- Helper function to initialize Google Sheets API client ---
 async function getSheetsClient() {
   if (!GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW) {
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_CREDENTIALS environment variable is not set.');
+    throw new Error('CRITICAL: The GOOGLE_SERVICE_ACCOUNT_CREDENTIALS environment variable is not set in your .env.local file or server environment. This is required for Google Sheets authentication. Please set it (as a single-line JSON string) and restart your server.');
   }
   if (!GOOGLE_SHEET_ID) {
-    throw new Error('GOOGLE_SHEET_ID environment variable is not set.');
+    throw new Error('CRITICAL: The GOOGLE_SHEET_ID environment variable is not set in your .env.local file or server environment. This is required to identify your Google Sheet. Please set it and restart your server.');
   }
 
   let credentials;
   try {
     credentials = JSON.parse(GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW);
   } catch (error) {
-    console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_CREDENTIALS:', error);
-    throw new Error('GOOGLE_SERVICE_ACCOUNT_CREDENTIALS is not valid JSON.');
+    console.error('Failed to parse GOOGLE_SERVICE_ACCOUNT_CREDENTIALS. Ensure it is a valid JSON string (ideally single-line) in your .env.local file:', error);
+    throw new Error('GOOGLE_SERVICE_ACCOUNT_CREDENTIALS is not valid JSON. Please check its format in your .env.local file and restart your server.');
   }
 
   const auth = new google.auth.GoogleAuth({
@@ -39,7 +40,7 @@ async function getSheetsClient() {
 export async function POST(request: NextRequest) {
   try {
     const sheets = await getSheetsClient();
-    const expenseData = (await request.json()) as Omit<Expense, 'id'>; // Expecting data without an ID
+    const expenseData = (await request.json()) as Omit<Expense, 'id' | 'date'>; 
 
     if (!expenseData.description || typeof expenseData.amount !== 'number' || !expenseData.category) {
       return NextResponse.json({ error: 'Missing required expense fields.' }, { status: 400 });
@@ -56,26 +57,19 @@ export async function POST(request: NextRequest) {
       expenseData.category,
     ];
 
-    // ** TODO: USER IMPLEMENTATION REQUIRED **
+    // ** USER IMPLEMENTATION REQUIRED **
     // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Ensure your sheet has columns in the order: ID, Date, Description, Amount, Category
     // Example:
     await sheets.spreadsheets.values.append({
-      spreadsheetId: GOOGLE_SHEET_ID,
+      spreadsheetId: GOOGLE_SHEET_ID!, // GOOGLE_SHEET_ID is checked in getSheetsClient
       range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [newExpenseRow],
       },
     });
-
-    console.log('--- SIMULATING ADD TO GOOGLE SHEETS (IMPLEMENTATION NEEDED) ---');
-    console.log('Spreadsheet ID:', GOOGLE_SHEET_ID);
-    console.log('Data to append:', newExpenseRow);
-    console.log('Target range: DragonSpend!A:E (Update if needed)');
-    console.log('--- END SIMULATION ---');
     
-    // For now, return the expense as if it were saved, including the generated ID and date
     const savedExpense: Expense = { ...expenseData, id: newId, date };
     return NextResponse.json(savedExpense, { status: 201 });
 
@@ -91,42 +85,44 @@ export async function GET() {
   try {
     const sheets = await getSheetsClient();
 
-    // ** TODO: USER IMPLEMENTATION REQUIRED **
+    // ** USER IMPLEMENTATION REQUIRED **
     // Replace 'DragonSpend' with the actual name of your sheet tab.
     // Assumes columns: ID, Date, Description, Amount, Category
     // Example:
     const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: GOOGLE_SHEET_ID,
+      spreadsheetId: GOOGLE_SHEET_ID!, // GOOGLE_SHEET_ID is checked in getSheetsClient
       range: 'DragonSpend!A:E', // Adjust if your sheet name or columns are different
     });
-    // const rows = response.data.values;
-    // if (rows && rows.length > 1) { // Assuming first row is header
-    //   const expenses: Expense[] = rows.slice(1).map((row: any[]) => ({
-    //     id: row[0],
-    //     date: row[1],
-    //     description: row[2],
-    //     amount: parseFloat(row[3]),
-    //     category: row[4] as ExpenseCategory,
-    //   }));
-    //   return NextResponse.json(expenses);
-    // } else {
-    //   return NextResponse.json([]); // No data or only header
-    // }
-
-    console.log('--- SIMULATING GET FROM GOOGLE SHEETS (IMPLEMENTATION NEEDED) ---');
-    console.log('Spreadsheet ID:', GOOGLE_SHEET_ID);
-    console.log('Target range: DragonSpend!A:E (Update if needed)');
-    console.log('--- END SIMULATION ---');
     
-    // For now, return an empty array or mock data
-    // Mock data for development until Sheets API is implemented:
-    const mockExpenses: Expense[] = [
-      // { id: 'mock1', date: new Date(Date.now() - 86400000).toISOString(), description: 'Mock Yesterday Coffee', amount: 3.50, category: 'Outside Food' },
-      // { id: 'mock2', date: new Date().toISOString(), description: 'Mock Today Lunch', amount: 12.75, category: 'Outside Food' },
-      // { id: 'mock3', date: new Date(Date.now() - (86400000 * 5)).toISOString(), description: 'Mock Groceries', amount: 55.20, category: 'Groceries' },
-    ];
-    return NextResponse.json(mockExpenses);
-
+    const rows = response.data.values;
+    if (rows && rows.length > 1) { // Assuming first row is header
+      const expenses: Expense[] = rows.slice(1).map((row: any[]) => {
+        // Basic validation for row structure
+        if (row.length < 5) {
+          console.warn('Skipping malformed row:', row);
+          return null; 
+        }
+        const amount = parseFloat(row[3]);
+        if (isNaN(amount)) {
+          console.warn('Skipping row with invalid amount:', row);
+          return null;
+        }
+        return {
+          id: row[0] || crypto.randomUUID(), // Fallback ID if empty
+          date: row[1] || new Date().toISOString(), // Fallback date if empty
+          description: row[2] || 'N/A',
+          amount: amount,
+          category: row[4] as ExpenseCategory || 'Miscellaneous', // Fallback category
+        };
+      }).filter(exp => exp !== null) as Expense[]; // Filter out nulls from malformed rows
+      return NextResponse.json(expenses);
+    } else if (rows && rows.length <= 1) {
+      // Sheet exists but has no data rows (or only a header)
+      return NextResponse.json([]);
+    } else {
+      // No rows found at all, possibly incorrect range or empty sheet
+      return NextResponse.json([]); 
+    }
 
   } catch (error) {
     console.error('Google Sheets API Error (GET):', error);
