@@ -89,10 +89,19 @@ export async function POST(request: NextRequest) {
       headers: getCorsHeaders(),
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Google Sheets API Error (POST) for Sheet ID: [${GOOGLE_SHEET_ID}], Range: [${sheetNameAndRange}]:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to add expense to sheet.';
-    return new NextResponse(JSON.stringify({ error: `Server error: ${errorMessage}` }), {
+    
+    let detailedMessage = 'Failed to add expense to sheet.';
+    if (error.code === 404) {
+      detailedMessage = `Error 404: "Requested entity was not found." This means the Google Sheet with ID [${GOOGLE_SHEET_ID}] could not be found OR the service account does not have 'Editor' permissions for it. Please verify the Sheet ID and sharing settings.`;
+    } else if (error.code === 403) {
+      detailedMessage = `Error 403: "The caller does not have permission." This means the Google Sheets API is not enabled in your Google Cloud project or the service account is not configured correctly.`;
+    } else if (error.message) {
+      detailedMessage = error.message;
+    }
+
+    return new NextResponse(JSON.stringify({ error: `Server error: ${detailedMessage}` }), {
       status: 500,
       headers: getCorsHeaders(),
     });
@@ -143,10 +152,19 @@ export async function GET() {
       });
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Google Sheets API Error (GET) for Sheet ID: [${GOOGLE_SHEET_ID}], Range: [${sheetNameAndRange}]:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch expenses from sheet.';
-    return new NextResponse(JSON.stringify({ error: `Server error: ${errorMessage}` }), {
+    
+    let detailedMessage = 'Failed to fetch expenses from sheet.';
+    if (error.code === 404) {
+      detailedMessage = `Error 404: "Requested entity was not found." This means the Google Sheet with ID [${GOOGLE_SHEET_ID}] could not be found OR the service account does not have 'Editor' permissions for it. Please verify the Sheet ID and sharing settings.`;
+    } else if (error.code === 403) {
+      detailedMessage = `Error 403: "The caller does not have permission." This means the Google Sheets API is not enabled in your Google Cloud project or the service account is not configured correctly.`;
+    } else if (error.message) {
+      detailedMessage = error.message;
+    }
+
+    return new NextResponse(JSON.stringify({ error: `Server error: ${detailedMessage}` }), {
       status: 500,
       headers: getCorsHeaders(),
     });
