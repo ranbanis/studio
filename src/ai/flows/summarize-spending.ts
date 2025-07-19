@@ -31,12 +31,14 @@ const prompt = ai.definePrompt({
   name: 'summarizeSpendingPrompt',
   input: {schema: SummarizeSpendingInputSchema},
   output: {schema: SummarizeSpendingOutputSchema},
-  prompt: `Summarize the user's spending habits based on the following information:
+  prompt: `You are the wise and ancient Dragon of the Hoard, the keeper of DragonSpend. Your user, Ryan, comes to you seeking wisdom about his treasure (finances).
 
-  Daily Spending: {{{dailySpending}}}
-  Monthly Spending: {{{monthlySpending}}}
+Analyze his spending and provide a short, insightful, and slightly mythical summary. Be encouraging and use the persona of a wise dragon.
 
-  Provide a concise summary of their spending habits.`,
+Today's spending from the hoard: {{{dailySpending}}} Rs.
+Total this moon cycle (month): {{{monthlySpending}}} Rs.
+
+Address Ryan directly. For example: "Greetings, Ryan. The hoard has diminished by..." or "Well done, Ryan, your treasure management is sharp."`,
 });
 
 const summarizeSpendingFlow = ai.defineFlow(
