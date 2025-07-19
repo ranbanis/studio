@@ -230,7 +230,7 @@ export default function InsightsPage() {
                     <TableCell className="font-medium">
                       <CategoryIcon category={item.category} />
                     </TableCell>
-                    <TableCell>${item.totalAmount.toFixed(2)}</TableCell>
+                    <TableCell>₹{item.totalAmount.toFixed(2)}</TableCell>
                     <TableCell className="text-right">{(item.percentage * 100).toFixed(1)}%</TableCell>
                   </TableRow>
                 ))}

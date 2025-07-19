@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -33,7 +34,7 @@ const CustomTooltip = ({ active, payload }: any) => {
            <CategoryIcon category={data.category} iconOnly className="h-4 w-4" style={{ color: getCategoryColor(data.category) }} />
            <p className="font-semibold">{data.category}</p>
         </div>
-        <p className="text-sm">Amount: ${data.totalAmount.toFixed(2)}</p>
+        <p className="text-sm">Amount: ₹{data.totalAmount.toFixed(2)}</p>
         <p className="text-sm">Percentage: {(data.percentage * 100).toFixed(1)}%</p>
       </div>
     );

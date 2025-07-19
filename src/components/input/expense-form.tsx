@@ -68,7 +68,7 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
       if (sheetResult.success && sheetResult.data) {
         toast({
           title: 'Expense Added! 🔥',
-          description: `"${sheetResult.data.description}" for $${sheetResult.data.amount.toFixed(2)} categorized as ${sheetResult.data.category}. Saved to backend.`,
+          description: `"${sheetResult.data.description}" for ₹${sheetResult.data.amount.toFixed(2)} categorized as ${sheetResult.data.category}. Saved to backend.`,
           variant: 'default',
           className: 'bg-secondary text-secondary-foreground border-accent'
         });
@@ -111,7 +111,7 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
             <Label htmlFor="expenseInput" className="text-foreground">Expense Details</Label>
             <Textarea
               id="expenseInput"
-              placeholder="e.g., 'Coffee with a friend for $5.50' or 'Gas bill 65 dollars'"
+              placeholder="e.g., 'Coffee with a friend for ₹350' or 'Gas bill 1500 rupees'"
               {...form.register('expenseInput')}
               className="bg-input border-border focus:ring-accent focus:border-accent"
               rows={3}

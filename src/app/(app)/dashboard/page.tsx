@@ -116,7 +116,7 @@ export default function DashboardPage() {
           <CardContent>
             {isLoading ? <Skeleton className="h-8 w-3/4" /> : (
               <div className="text-2xl font-bold text-foreground">
-                ${summary?.dailyTotal.toFixed(2) || '0.00'}
+                ₹{summary?.dailyTotal.toFixed(2) || '0.00'}
               </div>
             )}
             <p className="text-xs text-muted-foreground">Total for today</p>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
           <CardContent>
             {isLoading ? <Skeleton className="h-8 w-3/4" /> : (
               <div className="text-2xl font-bold text-foreground">
-                ${summary?.monthlyTotal.toFixed(2) || '0.00'}
+                ₹{summary?.monthlyTotal.toFixed(2) || '0.00'}
               </div>
             )}
             <p className="text-xs text-muted-foreground">Total for current month</p>
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                     <p className="font-medium text-foreground">{exp.description}</p>
                     <p className="text-xs text-muted-foreground">{exp.category} - {new Date(exp.date).toLocaleDateString()}</p>
                   </div>
-                  <p className="font-semibold text-primary">${exp.amount.toFixed(2)}</p>
+                  <p className="font-semibold text-primary">₹{exp.amount.toFixed(2)}</p>
                 </li>
               ))}
             </ul>
