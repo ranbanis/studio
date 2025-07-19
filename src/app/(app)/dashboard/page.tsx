@@ -193,14 +193,14 @@ export default function DashboardPage() {
           ) : recentExpenses.length > 0 ? (
             <ul className="space-y-3">
               {recentExpenses.map(exp => (
-                <li key={exp.id} className="flex justify-between items-center p-3 bg-card rounded-md">
+                <li key={exp.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-card rounded-md gap-2">
                   <div className="flex-1">
                     <p className="font-medium text-foreground">{exp.description}</p>
                     <p className="text-xs text-muted-foreground">{exp.category} - {new Date(exp.date).toLocaleDateString()}</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <p className="font-semibold text-primary">Rs. {exp.amount.toFixed(2)}</p>
-                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(exp)} className="h-8 w-8">
+                  <div className="flex items-center gap-4 w-full sm:w-auto">
+                    <p className="font-semibold text-primary flex-1">Rs. {exp.amount.toFixed(2)}</p>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(exp)} className="h-8 w-8 shrink-0">
                        <Pencil className="h-4 w-4 text-muted-foreground" />
                        <span className="sr-only">Edit Expense</span>
                     </Button>
