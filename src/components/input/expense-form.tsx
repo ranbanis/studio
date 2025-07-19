@@ -6,7 +6,6 @@ import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -16,11 +15,7 @@ import type { ExpenseCategory, Expense } from '@/lib/types';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 const expenseFormSchema = z.object({
-  description: z.string().min(1, { message: "Description is required." }).max(100, { message: "Description too long."}),
-  amount: z.preprocess(
-    (val) => parseFloat(z.string().parse(val)),
-    z.number().positive({ message: "Amount must be positive." })
-  ),
+  expenseInput: z.string().min(3, { message: "Please enter a description and amount." }).max(150, { message: "Input is too long."}),
 });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
@@ -37,8 +32,7 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
   const form = useForm<ExpenseFormValues>({
     resolver: zodResolver(expenseFormSchema),
     defaultValues: {
-      description: '',
-      amount: undefined,
+      expenseInput: '',
     },
   });
 
@@ -47,12 +41,13 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
     setFormError(null);
 
     try {
-      const aiResult = await categorizeExpenseAction(data.description);
+      // The AI now returns description, amount, and category
+      const aiResult = await categorizeExpenseAction(data.expenseInput);
 
       if ('error' in aiResult) {
         setFormError(aiResult.error);
         toast({
-          title: 'Categorization Failed',
+          title: 'Parsing Failed',
           description: aiResult.error,
           variant: 'destructive',
         });
@@ -60,11 +55,11 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
         return;
       }
       
-      const category = aiResult.category as ExpenseCategory;
+      const { description, amount, category } = aiResult;
       
       const expenseDataToSave: Omit<Expense, 'id' | 'date'> = {
-        description: data.description,
-        amount: data.amount,
+        description: description,
+        amount: amount,
         category: category,
       };
       
@@ -107,42 +102,27 @@ export function ExpenseForm({ onExpenseAdded }: ExpenseFormProps) {
       <CardHeader>
         <CardTitle className="text-2xl font-headline text-primary">Log New Expense</CardTitle>
         <CardDescription className="text-muted-foreground">
-          Enter your spending details below. Our AI dragon will categorize it!
+          Enter your spending details below. Our AI dragon will parse and categorize it!
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-foreground">Expense Description</Label>
+            <Label htmlFor="expenseInput" className="text-foreground">Expense Details</Label>
             <Textarea
-              id="description"
-              placeholder="e.g., 'Lunch with team' or 'New dragon miniature'"
-              {...form.register('description')}
+              id="expenseInput"
+              placeholder="e.g., 'Coffee with a friend for $5.50' or 'Gas bill 65 dollars'"
+              {...form.register('expenseInput')}
               className="bg-input border-border focus:ring-accent focus:border-accent"
               rows={3}
             />
-            {form.formState.errors.description && (
-              <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="amount" className="text-foreground">Amount ($)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              placeholder="e.g., 42.50"
-              {...form.register('amount')}
-              className="bg-input border-border focus:ring-accent focus:border-accent"
-            />
-            {form.formState.errors.amount && (
-              <p className="text-sm text-destructive">{form.formState.errors.amount.message}</p>
+            {form.formState.errors.expenseInput && (
+              <p className="text-sm text-destructive">{form.formState.errors.expenseInput.message}</p>
             )}
           </div>
           
           {formError && (
-            <div className="p-3 rounded-md bg-destructive/10 border border-destructive text-destructive text-sm flex items-center">
+            <div className="p-3 rounded-md bg-destructive/10 border border-destructive text-sm flex items-center">
               <AlertTriangle className="h-4 w-4 mr-2 shrink-0" />
               {formError}
             </div>

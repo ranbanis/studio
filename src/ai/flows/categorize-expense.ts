@@ -15,11 +15,13 @@ import {z} from 'genkit';
 const CategorizeExpenseInputSchema = z.object({
   expenseText: z
     .string()
-    .describe('The expense description entered by the user in natural language.'),
+    .describe('The expense description entered by the user in natural language, including amount.'),
 });
 export type CategorizeExpenseInput = z.infer<typeof CategorizeExpenseInputSchema>;
 
 const CategorizeExpenseOutputSchema = z.object({
+  description: z.string().describe('The extracted description of the expense.'),
+  amount: z.number().describe('The extracted monetary amount of the expense.'),
   category: z
     .enum([
       'Transport',
@@ -41,7 +43,7 @@ const prompt = ai.definePrompt({
   name: 'categorizeExpensePrompt',
   input: {schema: CategorizeExpenseInputSchema},
   output: {schema: CategorizeExpenseOutputSchema},
-  prompt: `Categorize the following expense text into one of these categories: Transport, Outside Food, Groceries, Entertainment, Utilities, Miscellaneous.\n\nExpense Text: {{{expenseText}}}\n\nRespond ONLY with the category name. Do not include any other text.`,
+  prompt: `Parse the following expense text. Extract the description, the numerical amount, and categorize it into one of the following: Transport, Outside Food, Groceries, Entertainment, Utilities, Miscellaneous.\n\nExpense Text: {{{expenseText}}}\n\nReturn a JSON object with the extracted description, amount, and category.`,
 });
 
 const categorizeExpenseFlow = ai.defineFlow(

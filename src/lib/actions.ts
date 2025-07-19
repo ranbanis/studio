@@ -21,13 +21,17 @@ const getApiBaseUrl = () => {
   return `http://localhost:9002`;
 };
 
-export async function categorizeExpenseAction(expenseText: string): Promise<{ category: ExpenseCategory } | { error: string }> {
+export async function categorizeExpenseAction(expenseText: string): Promise<{ description: string; amount: number; category: ExpenseCategory } | { error: string }> {
   try {
     const result = await categorizeExpenseFlow({ expenseText });
-    return { category: result.category as ExpenseCategory };
+    return { 
+      description: result.description,
+      amount: result.amount,
+      category: result.category as ExpenseCategory 
+    };
   } catch (error) {
     console.error('Error categorizing expense:', error);
-    return { error: 'Failed to categorize expense. Please try again.' };
+    return { error: 'Failed to parse expense from text. Please be more specific about the amount and description.' };
   }
 }
 
