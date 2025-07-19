@@ -42,18 +42,17 @@ export function AppSidebar() {
             <TooltipProvider key={item.label} delayDuration={100}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href={item.href} legacyBehavior>
-                    <a
-                      className={cn(
-                        "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
-                        isActive
-                          ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      )}
-                    >
-                      {Icon && <Icon className="h-5 w-5" />}
-                      <span>{item.label}</span>
-                    </a>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      "flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
+                      isActive
+                        ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    {Icon && <Icon className="h-5 w-5" />}
+                    <span>{item.label}</span>
                   </Link>
                 </TooltipTrigger>
                 <TooltipContent side="right">
