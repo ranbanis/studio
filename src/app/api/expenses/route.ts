@@ -9,6 +9,15 @@ import type { Expense, ExpenseCategory } from '@/lib/types';
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW = process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS;
 
+// --- Helper to set CORS headers ---
+function getCorsHeaders() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  };
+}
+
 // --- Helper function to initialize Google Sheets API client ---
 async function getSheetsClient() {
   if (!GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW) {
@@ -40,13 +49,16 @@ async function getSheetsClient() {
 
 // --- POST Handler to add an expense ---
 export async function POST(request: NextRequest) {
-  const sheetNameAndRange = 'DragonSpend!A:E'; // Corrected to match user's sheet name
+  const sheetNameAndRange = 'DragonSpend!A:E'; 
   try {
     const sheets = await getSheetsClient();
     const expenseData = (await request.json()) as Omit<Expense, 'id' | 'date'>; 
 
     if (!expenseData.description || typeof expenseData.amount !== 'number' || !expenseData.category) {
-      return NextResponse.json({ error: 'Missing required expense fields.' }, { status: 400 });
+      return new NextResponse(JSON.stringify({ error: 'Missing required expense fields.' }), { 
+        status: 400,
+        headers: getCorsHeaders(),
+      });
     }
     
     const newId = crypto.randomUUID();
@@ -60,7 +72,6 @@ export async function POST(request: NextRequest) {
       expenseData.category,
     ];
 
-    // Ensure your sheet has columns in the order: ID, Date, Description, Amount, Category
     await sheets.spreadsheets.values.append({
       spreadsheetId: GOOGLE_SHEET_ID!, 
       range: sheetNameAndRange, 
@@ -71,22 +82,27 @@ export async function POST(request: NextRequest) {
     });
     
     const savedExpense: Expense = { ...expenseData, id: newId, date };
-    return NextResponse.json(savedExpense, { status: 201 });
+    return new NextResponse(JSON.stringify(savedExpense), {
+      status: 201,
+      headers: getCorsHeaders(),
+    });
 
   } catch (error) {
     console.error(`Google Sheets API Error (POST) for Sheet ID: [${GOOGLE_SHEET_ID}], Range: [${sheetNameAndRange}]:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to add expense to sheet.';
-    return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
+    return new NextResponse(JSON.stringify({ error: `Server error: ${errorMessage}` }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
   }
 }
 
 // --- GET Handler to fetch all expenses ---
 export async function GET() {
-  const sheetNameAndRange = 'DragonSpend!A:E'; // Corrected to match user's sheet name
+  const sheetNameAndRange = 'DragonSpend!A:E'; 
   try {
     const sheets = await getSheetsClient();
 
-    // Assumes columns: ID, Date, Description, Amount, Category
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: GOOGLE_SHEET_ID!, 
       range: sheetNameAndRange, 
@@ -112,17 +128,31 @@ export async function GET() {
           category: row[4] as ExpenseCategory || 'Miscellaneous', 
         };
       }).filter(exp => exp !== null) as Expense[]; 
-      return NextResponse.json(expenses);
-    } else if (rows && rows.length <= 1) { // Handles empty sheet or sheet with only header
-      return NextResponse.json([]); // Return empty array if no data rows
-    } else { // Handles case where rows is undefined or null
-      return NextResponse.json([]); 
+      return new NextResponse(JSON.stringify(expenses), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
+    } else { 
+      return new NextResponse(JSON.stringify([]), {
+        status: 200,
+        headers: getCorsHeaders(),
+      });
     }
 
   } catch (error) {
     console.error(`Google Sheets API Error (GET) for Sheet ID: [${GOOGLE_SHEET_ID}], Range: [${sheetNameAndRange}]:`, error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to fetch expenses from sheet.';
-    return NextResponse.json({ error: `Server error: ${errorMessage}` }, { status: 500 });
+    return new NextResponse(JSON.stringify({ error: `Server error: ${errorMessage}` }), {
+      status: 500,
+      headers: getCorsHeaders(),
+    });
   }
 }
 
+// --- OPTIONS Handler for preflight requests ---
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204, // No Content
+    headers: getCorsHeaders(),
+  });
+}
