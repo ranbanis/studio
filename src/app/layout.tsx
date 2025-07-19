@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: 'DragonSpend',
   description: 'Track your expenses with fiery insights!',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
