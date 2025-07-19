@@ -49,7 +49,9 @@ async function getSheetsClient() {
 
 // --- POST Handler to add an expense ---
 export async function POST(request: NextRequest) {
-  const sheetNameAndRange = 'DragonSpend!A:E'; 
+  const sheetNameAndRange = 'DragonSpend!A:E';
+  console.log(`---Sheets API POST--- Attempting to write to Sheet ID: [${GOOGLE_SHEET_ID}] with Range: [${sheetNameAndRange}]`);
+
   try {
     const sheets = await getSheetsClient();
     const expenseData = (await request.json()) as Omit<Expense, 'id' | 'date'>; 
@@ -99,7 +101,9 @@ export async function POST(request: NextRequest) {
 
 // --- GET Handler to fetch all expenses ---
 export async function GET() {
-  const sheetNameAndRange = 'DragonSpend!A:E'; 
+  const sheetNameAndRange = 'DragonSpend!A:E';
+  console.log(`---Sheets API GET--- Attempting to read from Sheet ID: [${GOOGLE_SHEET_ID}] with Range: [${sheetNameAndRange}]`);
+  
   try {
     const sheets = await getSheetsClient();
 
