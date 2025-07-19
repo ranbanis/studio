@@ -1,3 +1,4 @@
+
 // src/ai/flows/categorize-expense.ts
 'use server';
 
@@ -43,7 +44,7 @@ const prompt = ai.definePrompt({
   name: 'categorizeExpensePrompt',
   input: {schema: CategorizeExpenseInputSchema},
   output: {schema: CategorizeExpenseOutputSchema},
-  prompt: `Parse the following expense text. Extract the description, the numerical amount, and categorize it into one of the following: Transport, Outside Food, Groceries, Entertainment, Utilities, Miscellaneous.\n\nThe currency is Rupees (₹), even if not explicitly mentioned.\n\nExpense Text: {{{expenseText}}}\n\nReturn a JSON object with the extracted description, amount, and category.`,
+  prompt: `Parse the following expense text. Extract the description, the numerical amount, and categorize it into one of the following: Transport, Outside Food, Groceries, Entertainment, Utilities, Miscellaneous.\n\nThe currency is Rupees (Rs.), even if not explicitly mentioned.\n\nExpense Text: {{{expenseText}}}\n\nReturn a JSON object with the extracted description, amount, and category.`,
 });
 
 const categorizeExpenseFlow = ai.defineFlow(

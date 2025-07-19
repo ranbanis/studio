@@ -48,7 +48,7 @@ export async function summarizeSpendingAction(dailySpending: number, monthlySpen
 export async function provideSpendingInsightsAction(monthlySpendingData: MonthlyBreakdownItem[]): Promise<any | { error: string }> {
   try {
     const formattedData = monthlySpendingData
-      .map(item => `${item.category}: ₹${item.totalAmount.toFixed(2)}`)
+      .map(item => `${item.category}: Rs. ${item.totalAmount.toFixed(2)}`)
       .join(', ');
     
     if (!formattedData || monthlySpendingData.length === 0) {
