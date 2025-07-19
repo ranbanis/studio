@@ -1,6 +1,7 @@
 import type { ExpenseCategory } from '@/lib/types';
 import { CarFront, UtensilsCrossed, ShoppingCart, Ticket, Zap, Package, HelpCircle } from 'lucide-react';
 import type { LucideProps } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface CategoryIconProps extends LucideProps {
   category: ExpenseCategory | string; // Allow string for flexibility if new categories emerge
