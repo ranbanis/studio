@@ -4,13 +4,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { PageTitle } from '@/components/shared/page-title';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DollarSign, TrendingUp, AlertTriangle } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertTriangle, Pencil } from 'lucide-react';
 import { DaysRemaining } from '@/components/shared/days-remaining';
 import { getExpensesFromSheetViaAPI, summarizeSpendingAction } from '@/lib/actions';
 import type { Expense, SpendingSummary } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { EditExpenseDialog } from '@/components/input/edit-expense-dialog';
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<SpendingSummary | null>(null);
@@ -18,6 +19,25 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [recentExpenses, setRecentExpenses] = useState<Expense[]>([]);
   const [allExpenses, setAllExpenses] = useState<Expense[]>([]);
+  
+  // State for edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+
+  const handleEditClick = (expense: Expense) => {
+    setSelectedExpense(expense);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleExpenseUpdated = (updatedExpense: Expense) => {
+    const updater = (expenses: Expense[]) => 
+      expenses.map(exp => (exp.id === updatedExpense.id ? updatedExpense : exp));
+      
+    setRecentExpenses(updater);
+    setAllExpenses(updater);
+    // Optionally, re-fetch all data to ensure consistency
+    fetchDashboardData();
+  };
 
   const fetchDashboardData = useCallback(async () => {
     setIsLoading(true);
@@ -30,12 +50,9 @@ export default function DashboardPage() {
         setAllExpenses([]);
         setRecentExpenses([]);
       } else {
-        setAllExpenses(expensesResult.data);
-        setRecentExpenses(
-          expensesResult.data
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, 5)
-        );
+        const sortedExpenses = expensesResult.data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        setAllExpenses(sortedExpenses);
+        setRecentExpenses(sortedExpenses.slice(0, 5));
       }
       
       // Calculate daily and monthly totals from fetched expenses
@@ -90,6 +107,7 @@ export default function DashboardPage() {
   const greeting = "Welcome to DragonSpend!";
 
   return (
+    <>
     <div className="space-y-8">
       <PageTitle title="Dashboard" subtitle={greeting} />
 
@@ -176,11 +194,17 @@ export default function DashboardPage() {
             <ul className="space-y-3">
               {recentExpenses.map(exp => (
                 <li key={exp.id} className="flex justify-between items-center p-3 bg-card rounded-md">
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-foreground">{exp.description}</p>
                     <p className="text-xs text-muted-foreground">{exp.category} - {new Date(exp.date).toLocaleDateString()}</p>
                   </div>
-                  <p className="font-semibold text-primary">Rs. {exp.amount.toFixed(2)}</p>
+                  <div className="flex items-center gap-4">
+                    <p className="font-semibold text-primary">Rs. {exp.amount.toFixed(2)}</p>
+                    <Button variant="ghost" size="icon" onClick={() => handleEditClick(exp)} className="h-8 w-8">
+                       <Pencil className="h-4 w-4 text-muted-foreground" />
+                       <span className="sr-only">Edit Expense</span>
+                    </Button>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -195,5 +219,12 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
     </div>
+    <EditExpenseDialog 
+        expense={selectedExpense}
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onExpenseUpdated={handleExpenseUpdated}
+    />
+    </>
   );
 }

@@ -121,3 +121,32 @@ export async function getExpensesFromSheetViaAPI(): Promise<{ data?: Expense[]; 
     return { success: false, message: `Fetch error: ${errorMessage}. Attempted to reach ${apiUrl}.` };
   }
 }
+
+// Action to UPDATE an expense by calling our backend API
+export async function updateExpenseInSheetViaAPI(
+  expenseData: Expense
+): Promise<{ data?: Expense; success: boolean; message?: string }> {
+  const apiUrl = `${getApiBaseUrl()}/api/expenses`;
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(expenseData),
+    });
+
+    if (!response.ok) {
+      const errorResult = await response.json();
+      console.error('Failed to update expense via API:', errorResult);
+      return { success: false, message: errorResult.error || `Failed to update expense. Server responded with ${response.status}.` };
+    }
+
+    const result: Expense = await response.json();
+    return { data: result, success: true, message: 'Expense updated successfully via API.' };
+  } catch (error) {
+    console.error('Error calling update expense API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred while updating the expense.';
+    return { success: false, message: `Fetch error: ${errorMessage}. Attempted to reach ${apiUrl}.` };
+  }
+}

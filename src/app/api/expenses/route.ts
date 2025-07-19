@@ -8,12 +8,13 @@ import type { Expense, ExpenseCategory } from '@/lib/types';
 // Ensure environment variables are loaded
 const GOOGLE_SHEET_ID = process.env.GOOGLE_SHEET_ID;
 const GOOGLE_SERVICE_ACCOUNT_CREDENTIALS_RAW = process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS;
+const SHEET_NAME = 'DragonSpend';
 
 // --- Helper to set CORS headers ---
 function getCorsHeaders() {
   return {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 }
@@ -49,7 +50,7 @@ async function getSheetsClient() {
 
 // --- POST Handler to add an expense ---
 export async function POST(request: NextRequest) {
-  const sheetNameAndRange = 'DragonSpend!A:E';
+  const sheetNameAndRange = `${SHEET_NAME}!A:E`;
   console.log(`---Sheets API POST--- Attempting to write to Sheet ID: [${GOOGLE_SHEET_ID}] with Range: [${sheetNameAndRange}]`);
 
   try {
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
 
 // --- GET Handler to fetch all expenses ---
 export async function GET() {
-  const sheetNameAndRange = 'DragonSpend!A:E';
+  const sheetNameAndRange = `${SHEET_NAME}!A:E`;
   console.log(`---Sheets API GET--- Attempting to read from Sheet ID: [${GOOGLE_SHEET_ID}] with Range: [${sheetNameAndRange}]`);
   
   try {
@@ -170,6 +171,87 @@ export async function GET() {
     });
   }
 }
+
+// --- PUT Handler to update an expense ---
+export async function PUT(request: NextRequest) {
+    const readRange = `${SHEET_NAME}!A:E`;
+    console.log(`---Sheets API PUT--- Attempting to update Sheet ID: [${GOOGLE_SHEET_ID}]`);
+
+    try {
+        const sheets = await getSheetsClient();
+        const expenseToUpdate = (await request.json()) as Expense;
+
+        if (!expenseToUpdate.id || !expenseToUpdate.description || typeof expenseToUpdate.amount !== 'number' || !expenseToUpdate.category) {
+            return new NextResponse(JSON.stringify({ error: 'Missing required fields for update.' }), {
+                status: 400,
+                headers: getCorsHeaders(),
+            });
+        }
+        
+        // 1. Find the row of the expense to update
+        const getResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId: GOOGLE_SHEET_ID!,
+            range: readRange,
+        });
+
+        const rows = getResponse.data.values;
+        if (!rows || rows.length <= 1) {
+            throw new Error(`Expense with ID ${expenseToUpdate.id} not found in sheet.`);
+        }
+
+        // Find the index of the row with the matching ID. +2 because Sheets are 1-indexed and we skip the header.
+        const rowIndex = rows.slice(1).findIndex(row => row[0] === expenseToUpdate.id);
+        if (rowIndex === -1) {
+             return new NextResponse(JSON.stringify({ error: `Expense with ID ${expenseToUpdate.id} not found.` }), {
+                status: 404,
+                headers: getCorsHeaders(),
+            });
+        }
+        const sheetRowNumber = rowIndex + 2; 
+
+        // 2. Update the row
+        const updateRange = `${SHEET_NAME}!A${sheetRowNumber}:E${sheetRowNumber}`;
+        const updatedRowValues = [
+            expenseToUpdate.id,
+            expenseToUpdate.date,
+            expenseToUpdate.description,
+            expenseToUpdate.amount,
+            expenseToUpdate.category,
+        ];
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId: GOOGLE_SHEET_ID!,
+            range: updateRange,
+            valueInputOption: 'USER_ENTERED',
+            requestBody: {
+                values: [updatedRowValues],
+            },
+        });
+
+        return new NextResponse(JSON.stringify(expenseToUpdate), {
+            status: 200,
+            headers: getCorsHeaders(),
+        });
+
+    } catch (error: any) {
+        console.error(`Google Sheets API Error (PUT) for Sheet ID: [${GOOGLE_SHEET_ID}]:`, error);
+        
+        let detailedMessage = 'Failed to update expense in sheet.';
+        if (error.code === 404) {
+            detailedMessage = `Error 404: Sheet not found or ID not present.`;
+        } else if (error.code === 403) {
+            detailedMessage = `Error 403: No permission to edit.`;
+        } else if (error.message) {
+            detailedMessage = error.message;
+        }
+
+        return new NextResponse(JSON.stringify({ error: `Server error: ${detailedMessage}` }), {
+            status: 500,
+            headers: getCorsHeaders(),
+        });
+    }
+}
+
 
 // --- OPTIONS Handler for preflight requests ---
 export async function OPTIONS() {
